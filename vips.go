@@ -300,7 +300,11 @@ func (img *vipsImage) Save(imgtype imageType, quality int) ([]byte, context.Canc
 }
 
 func (img *vipsImage) SaveToFitBytes(imgtype imageType, initialQuality, maxBytes int) ([]byte, context.CancelFunc, error) {
-	var tmp *C.VipsImage
+	// var tmp *C.VipsImage
+	// var (
+	// 	newImg *vipsImage
+	// 	tmp *C.VipsImage
+	// )
 
 	initialResult, initialCancel, initialErr := img.Save(imgtype, initialQuality)
 	quality := initialQuality
@@ -315,16 +319,18 @@ func (img *vipsImage) SaveToFitBytes(imgtype imageType, initialQuality, maxBytes
 		quality = int(float64(quality) * 0.75)
 
 		if quality < 10 {
-			// log error
+			logNotice("Could not find any reduction that matches required size of %d bytes.", maxBytes)
 			res = initialResult
 			cancel = initialCancel
 			err = initialErr
 			break
 		}
 
-		tmp = C.vips_image_new_from_memory_copy(img.VipsImage.baseaddr, img.VipsImage.length, img.VipsImage.Xsize, img.VipsImage.Ysize, img.VipsImage.Bands, img.VipsImage.BandFmt)
+		logNotice("Trying to downsize image with quality of %d... ", quality)
+		tmp := C.vips_image_new_from_memory_copy(unsafe.Pointer(img.VipsImage.baseaddr), img.VipsImage.length, img.VipsImage.Xsize, img.VipsImage.Ysize, img.VipsImage.Bands, img.VipsImage.BandFmt)
 		C.swap_and_clear(&newImg.VipsImage, tmp)
 		res, cancel, err = newImg.Save(imgtype, quality)
+		newImg.Clear()
 	}
 
 	// Increasing quality
@@ -338,10 +344,11 @@ func (img *vipsImage) SaveToFitBytes(imgtype imageType, initialQuality, maxBytes
 			quality = int(float64(quality) * 1.1)
 		}
 
+		logNotice("Trying to upsize image with quality of %d...", quality)
 		prevResult = res
 		prevCancel = cancel
 		prevErr    = err
-		tmp = C.vips_image_new_from_memory_copy(img.VipsImage.baseaddr, img.VipsImage.length, img.VipsImage.Xsize, img.VipsImage.Ysize, img.VipsImage.Bands, img.VipsImage.BandFmt)
+		tmp := C.vips_image_new_from_memory_copy(unsafe.Pointer(img.VipsImage.baseaddr), img.VipsImage.length, img.VipsImage.Xsize, img.VipsImage.Ysize, img.VipsImage.Bands, img.VipsImage.BandFmt)
 		C.swap_and_clear(&newImg.VipsImage, tmp)
 		res, cancel, err = newImg.Save(imgtype, quality)
 	}
