@@ -109,6 +109,7 @@ type processingOptions struct {
 	Crop       cropOptions
 	Format     imageType
 	Quality    int
+	MaxBytes   int
 	Flatten    bool
 	Background rgbColor
 	Blur       float32
@@ -465,6 +466,20 @@ func applyQualityOption(po *processingOptions, args []string) error {
 	return nil
 }
 
+func applyMaxBytesOption(po *processingOptions, args []string) error {
+	if len(args) > 1 {
+		return fmt.Errorf("Invalid max_bytes arguments: %v", args)
+	}
+
+	if max, err := strconv.Atoi(args[0]); err == nil && max > 0 {
+		po.MaxBytes = max
+	} else {
+		return fmt.Errorf("Invalid max_bytes: %s", args[0])
+	}
+
+	return nil
+}
+
 func applyBackgroundOption(po *processingOptions, args []string) error {
 	switch len(args) {
 	case 1:
@@ -681,6 +696,10 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 		if err := applyQualityOption(po, args); err != nil {
 			return err
 		}
+	case "max_bytes", "mb":
+		if err := applyMaxBytesOption(po, args); err != nil {
+			return err
+		}
 	case "background", "bg":
 		if err := applyBackgroundOption(po, args); err != nil {
 			return err
@@ -758,6 +777,7 @@ func defaultProcessingOptions(headers *processingHeaders) (*processingOptions, e
 		Gravity:     gravityOptions{Type: gravityCenter},
 		Enlarge:     false,
 		Quality:     conf.Quality,
+		MaxBytes:    0,
 		Format:      imageTypeUnknown,
 		Background:  rgbColor{255, 255, 255},
 		Blur:        0,

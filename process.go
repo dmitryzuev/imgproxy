@@ -569,5 +569,14 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 		checkTimeout(ctx)
 	}
 
-	return img.Save(po.Format, po.Quality)
+	if po.MaxBytes > 0 {
+		switch po.Format {
+		case imageTypeJPEG, imageTypeWEBP, imageTypeHEIC:
+			return img.SaveToFitBytes(po.Format, po.Quality, po.MaxBytes)
+		default:
+			return img.Save(po.Format, po.Quality)
+		}
+	} else {
+		return img.Save(po.Format, po.Quality)
+	}
 }
