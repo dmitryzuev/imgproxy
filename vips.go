@@ -209,62 +209,10 @@ func (img *vipsImage) Save(imgtype imageType, quality int) ([]byte, context.Canc
 	return b, cancel, nil
 }
 
-func (img *vipsImage) SaveToFitBytes(imgtype imageType, initialQuality, maxBytes int) ([]byte, context.CancelFunc, error) {
-	// var tmp *C.VipsImage
-	// var (
-	// 	newImg *vipsImage
-	// 	tmp *C.VipsImage
-	// )
+// func (img *vipsImage) SaveToFitBytes(imgtype imageType, initialQuality, maxBytes int) ([]byte, context.CancelFunc, error) {
+// 	newImg = new(vipsImage)
 
-	initialResult, initialCancel, initialErr := img.Save(imgtype, initialQuality)
-	quality := initialQuality
-	res := initialResult
-	cancel := initialCancel
-	err := initialErr
-	newImg := new(vipsImage)
-	defer newImg.Clear()
-
-	// Decreasing quality
-	for len(res) > maxBytes {
-		quality = int(float64(quality) * 0.75)
-
-		if quality < 10 {
-			logNotice("Could not find any reduction that matches required size of %d bytes.", maxBytes)
-			res = initialResult
-			cancel = initialCancel
-			err = initialErr
-			break
-		}
-
-		logNotice("Trying to downsize image with quality of %d... ", quality)
-		tmp := C.vips_image_new_from_memory_copy(unsafe.Pointer(img.VipsImage.baseaddr), img.VipsImage.length, img.VipsImage.Xsize, img.VipsImage.Ysize, img.VipsImage.Bands, img.VipsImage.BandFmt)
-		C.swap_and_clear(&newImg.VipsImage, tmp)
-		res, cancel, err = newImg.Save(imgtype, quality)
-		newImg.Clear()
-	}
-
-	// Increasing quality
-	prevResult := res
-	prevCancel := cancel
-	prevErr    := err
-  for len(res) <= maxBytes && quality < initialQuality {
-		if initialQuality > int(float64(quality) * 1.1) {
-			quality = initialQuality
-		} else {
-			quality = int(float64(quality) * 1.1)
-		}
-
-		logNotice("Trying to upsize image with quality of %d...", quality)
-		prevResult = res
-		prevCancel = cancel
-		prevErr    = err
-		tmp := C.vips_image_new_from_memory_copy(unsafe.Pointer(img.VipsImage.baseaddr), img.VipsImage.length, img.VipsImage.Xsize, img.VipsImage.Ysize, img.VipsImage.Bands, img.VipsImage.BandFmt)
-		C.swap_and_clear(&newImg.VipsImage, tmp)
-		res, cancel, err = newImg.Save(imgtype, quality)
-	}
-
-	return prevResult, prevCancel, prevErr
-}
+// }
 
 func (img *vipsImage) Clear() {
 	if img.VipsImage != nil {

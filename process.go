@@ -682,14 +682,59 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 		checkTimeout(ctx)
 	}
 
-	if po.MaxBytes > 0 {
-		switch po.Format {
-		case imageTypeJPEG, imageTypeWEBP, imageTypeHEIC:
-			return img.SaveToFitBytes(po.Format, po.Quality, po.MaxBytes)
-		default:
-			return img.Save(po.Format, po.Quality)
-		}
-	} else {
-		return img.Save(po.Format, po.Quality)
+	return img.Save(po.Format, po.Quality)
+}
+
+func processImageMaxBytes(ctx context.Context) ([]byte, context.CancelFunc, error) {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
+	initialResult, initialCancel, err := processImage(ctx)
+	if err != nil {
+		return initialResult, initialCancel, err
 	}
+
+	po := getProcessingOptions(ctx)
+	// Can't downgrade other formats
+	if po.Format != imageTypeJPEG && po.Format != imageTypeWEBP && po.Format != imageTypeHEIC {
+		return initialResult, initialCancel, nil
+	}
+
+	// No need to downgrade
+	if len(initialResult) < po.MaxBytes {
+		return initialResult, initialCancel, nil
+	}
+
+	checkTimeout(ctx)
+
+	initialQuality := po.Quality
+
+	quality := initialQuality
+	result := initialResult
+	var cancel context.CancelFunc
+	var cancels []context.CancelFunc
+	cancelFunc := func() {
+		for _, cancel := range cancels {
+			cancel()
+		}
+	}
+
+	for len(result) > po.MaxBytes {
+		quality = int(float64(quality) * 0.75)
+
+		if quality < 10 {
+			return initialResult, initialCancel, nil
+		}
+
+		checkTimeout(ctx)
+
+		po.Quality = quality
+		result, cancel, err = processImage(ctx)
+		cancels = append(cancels, cancel)
+		if err != nil {
+			return result, cancelFunc, err
+		}
+	}
+
+	return result, cancelFunc, nil
 }
