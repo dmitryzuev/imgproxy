@@ -686,9 +686,6 @@ func processImage(ctx context.Context) ([]byte, context.CancelFunc, error) {
 }
 
 func processImageMaxBytes(ctx context.Context) ([]byte, context.CancelFunc, error) {
-	runtime.LockOSThread()
-	defer runtime.UnlockOSThread()
-
 	initialResult, initialCancel, err := processImage(ctx)
 	if err != nil {
 		return initialResult, initialCancel, err
@@ -720,7 +717,17 @@ func processImageMaxBytes(ctx context.Context) ([]byte, context.CancelFunc, erro
 	}
 
 	for len(result) > po.MaxBytes {
-		quality = int(float64(quality) * 0.75)
+		var diff float64
+		delta := float64(len(result)) / float64(po.MaxBytes)
+		switch {
+		case delta > 3:
+			diff = 0.25
+		case delta > 1.5:
+			diff = 0.5
+		default:
+			diff = 0.75
+		}
+		quality = int(float64(quality) * diff)
 
 		if quality < 10 {
 			return initialResult, initialCancel, nil

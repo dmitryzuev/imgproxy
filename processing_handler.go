@@ -152,9 +152,8 @@ func handleProcessing(reqID string, rw http.ResponseWriter, r *http.Request) {
 	processFunc := func() ([]byte, context.CancelFunc, error) {
 		if po.MaxBytes > 0 {
 			return processImageMaxBytes(ctx)
-		} else {
-			return processImage(ctx)
 		}
+		return processImage(ctx)
 	}
 	imageData, processcancel, err := processFunc()
 	defer processcancel()

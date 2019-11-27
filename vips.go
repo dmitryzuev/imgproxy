@@ -209,11 +209,6 @@ func (img *vipsImage) Save(imgtype imageType, quality int) ([]byte, context.Canc
 	return b, cancel, nil
 }
 
-// func (img *vipsImage) SaveToFitBytes(imgtype imageType, initialQuality, maxBytes int) ([]byte, context.CancelFunc, error) {
-// 	newImg = new(vipsImage)
-
-// }
-
 func (img *vipsImage) Clear() {
 	if img.VipsImage != nil {
 		C.clear_image(&img.VipsImage)
