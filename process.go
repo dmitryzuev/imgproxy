@@ -133,6 +133,15 @@ func canScaleOnLoad(imgtype imageType, scale float64) bool {
 	return imgtype == imageTypeJPEG || imgtype == imageTypeWEBP
 }
 
+func canFitToBytes(imgtype imageType) bool {
+	switch imgtype {
+	case imageTypeJPEG, imageTypeWEBP, imageTypeHEIC, imageTypeTIFF:
+		return true
+	default:
+		return false
+	}
+}
+
 func calcJpegShink(scale float64, imgtype imageType) int {
 	shrink := int(1.0 / scale)
 
@@ -692,13 +701,7 @@ func processImageMaxBytes(ctx context.Context) ([]byte, context.CancelFunc, erro
 	}
 
 	po := getProcessingOptions(ctx)
-	// Can't downgrade other formats
-	if po.Format != imageTypeJPEG && po.Format != imageTypeWEBP && po.Format != imageTypeHEIC {
-		return initialResult, initialCancel, nil
-	}
-
-	// No need to downgrade
-	if len(initialResult) < po.MaxBytes {
+	if canFitToBytes(po.Format) || len(initialResult) < po.MaxBytes {
 		return initialResult, initialCancel, nil
 	}
 
