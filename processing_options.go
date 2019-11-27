@@ -106,23 +106,6 @@ type watermarkOptions struct {
 }
 
 type processingOptions struct {
-<<<<<<< HEAD
-	Resize     resizeType
-	Width      int
-	Height     int
-	Dpr        float64
-	Gravity    gravityOptions
-	Enlarge    bool
-	Extend     bool
-	Crop       cropOptions
-	Format     imageType
-	Quality    int
-	MaxBytes   int
-	Flatten    bool
-	Background rgbColor
-	Blur       float32
-	Sharpen    float32
-=======
 	ResizingType resizeType
 	Width        int
 	Height       int
@@ -133,11 +116,11 @@ type processingOptions struct {
 	Crop         cropOptions
 	Format       imageType
 	Quality      int
+	MaxBytes     int
 	Flatten      bool
 	Background   rgbColor
 	Blur         float32
 	Sharpen      float32
->>>>>>> master
 
 	CacheBuster string
 
@@ -211,6 +194,7 @@ func newProcessingOptions() *processingOptions {
 			Gravity:      gravityOptions{Type: gravityCenter},
 			Enlarge:      false,
 			Quality:      conf.Quality,
+			MaxBytes:     0,
 			Format:       imageTypeUnknown,
 			Background:   rgbColor{255, 255, 255},
 			Blur:         0,
@@ -775,17 +759,9 @@ func applyProcessingOption(po *processingOptions, name string, args []string) er
 	case "crop", "c":
 		return applyCropOption(po, args)
 	case "quality", "q":
-<<<<<<< HEAD
-		if err := applyQualityOption(po, args); err != nil {
-			return err
-		}
-	case "max_bytes", "mb":
-		if err := applyMaxBytesOption(po, args); err != nil {
-			return err
-		}
-=======
 		return applyQualityOption(po, args)
->>>>>>> master
+	case "max_bytes", "mb":
+		return applyMaxBytesOption(po, args)
 	case "background", "bg":
 		return applyBackgroundOption(po, args)
 	case "blur", "bl":
@@ -842,28 +818,7 @@ func parseURLOptions(opts []string) (urlOptions, []string) {
 }
 
 func defaultProcessingOptions(headers *processingHeaders) (*processingOptions, error) {
-<<<<<<< HEAD
-	var err error
-
-	po := processingOptions{
-		Resize:      resizeFit,
-		Width:       0,
-		Height:      0,
-		Gravity:     gravityOptions{Type: gravityCenter},
-		Enlarge:     false,
-		Quality:     conf.Quality,
-		MaxBytes:    0,
-		Format:      imageTypeUnknown,
-		Background:  rgbColor{255, 255, 255},
-		Blur:        0,
-		Sharpen:     0,
-		Dpr:         1,
-		Watermark:   watermarkOptions{Opacity: 1, Replicate: false, Gravity: gravityCenter},
-		UsedPresets: make([]string, 0, len(conf.Presets)),
-	}
-=======
 	po := newProcessingOptions()
->>>>>>> master
 
 	if strings.Contains(headers.Accept, "image/webp") {
 		po.PreferWebP = conf.EnableWebpDetection || conf.EnforceWebp
